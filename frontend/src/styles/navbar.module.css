@@ -1,0 +1,26 @@
+.nav{
+    height: 2.5rem;
+    padding: 5px 20px;
+    display: flex;
+    border: 1px solid rgb(209, 209, 209);
+    align-items: center;
+    justify-content: space-around;
+    background-color: #fff;
+    
+}
+.nav > div:nth-child(2){
+    width: 20%;
+    display: flex;
+    justify-content: space-between;
+}
+.nav div{
+    display: flex;
+    align-items: center;
+}
+.login{
+    margin-right: 20%;
+}
+
+.nav div:hover{
+    cursor: pointer;
+}

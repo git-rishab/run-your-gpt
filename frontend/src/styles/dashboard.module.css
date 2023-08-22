@@ -1,0 +1,44 @@
+.dashboard{
+    width: 90%;
+    background-color: #fff;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+    border-radius: 5px;
+    height: 80vh;
+    margin-top: 40px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+}
+
+.chat{
+    width: 100%;
+    height: 93%;
+    display: flex;
+    flex-direction: column;
+    row-gap: 15px;
+}
+
+.box{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+.input{
+    width: 90%;
+}
+.chat > div{
+    border-radius: 3px;
+    padding: 10px 15px;
+}
+.client{
+    position: relative;
+    left: 0;
+    background-color: #7bb3e7;
+    color: #fff;
+}
+.server{
+    position: relative;
+    right: 0;
+    background-color: #CAFF8A;
+    /* color: #fff; */
+}

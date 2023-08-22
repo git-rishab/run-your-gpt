@@ -1,6 +1,13 @@
 import asyncio
 import json
 import sys
+from flask import request, jsonify, send_file
+from gtts import gTTS
+import os
+import openai
+import speech_recognition as sr
+from pydub import AudioSegment
+from config.db import user
 
 try:
     import websockets
@@ -8,12 +15,13 @@ except ImportError:
     print("Websockets package not found. Make sure it's installed.")
 
 # For local streaming, the websockets are hosted without ssl - ws://
-HOST = 'localhost:5005'
+HOST = 'subscription-tribute-interaction-capture.trycloudflare.com'
 URI = f'ws://{HOST}/api/v1/chat-stream'
 
 # For reverse-proxied streaming, the remote will likely host with ssl - wss://
 # URI = 'wss://your-uri-here.trycloudflare.com/api/v1/stream'
 
+history = {'internal': [], 'visible': []}
 
 async def run(user_input, history):
     # Note: the selected defaults change from time to time.
@@ -88,21 +96,74 @@ async def run(user_input, history):
 
 async def print_response_stream(user_input, history):
     cur_len = 0
+    generated_messages = []
     async for new_history in run(user_input, history):
         cur_message = new_history['visible'][-1][1][cur_len:]
         cur_len += len(cur_message)
-        print(cur_message, end='')
-        sys.stdout.flush()  # If we don't flush, we won't see tokens in realtime.
+        generated_messages.append(cur_message)
+        # sys.stdout.flush()  # If we don't flush, we won't see tokens in realtime.
+    collected_responses = ''.join(generated_messages)  # Combine all messages
+    return collected_responses
 
 
-if __name__ == '__main__':
-    user_input = "Please give me a step-by-step guide on how to plant a tree in my backyard."
+def chat():
+    prompt = request.json['prompt']
+    user_id = request.json['id']
+    limit = request.json['limit']
+    collected_responses = asyncio.run(print_response_stream(prompt, history))
+    # history['internal'].append(prompt)
+    # history['visible'].append(collected_responses)
+    updated = user.update_one({'_id':user_id}, {'$set':{'limit':limit-1}})
+    return jsonify({"ok":True, "message":collected_responses})
 
-    # Basic example
-    history = {'internal': [], 'visible': []}
+def audio():
+    try:
+        request_data = request.get_json()
+        text = request_data.get('prompt')  # Access the 'prompt' value from the dictionary
+        
+        # Convert text to speech using gTTS
+        tts = gTTS(text=text, lang='en')
+        
+        # Save the generated speech as an audio file
+        audio_file_path = 'speech.mp3'
+        tts.save(audio_file_path)
+        
+        # Send the audio file back to the client
+        return send_file(audio_file_path, as_attachment=True)
+    except Exception as e:
+        return str(e), 500
 
-    # "Continue" example. Make sure to set '_continue' to True above
-    # arr = [user_input, 'Surely, here is']
-    # history = {'internal': [arr], 'visible': [arr]}
+def audio_to_text():
+    try:
+        audio_file = request.files['audio']
 
-    asyncio.run(print_response_stream(user_input, history))
+        # Convert audio to WAV format
+        converted_audio = "converted_audio.wav"
+        audio = AudioSegment.from_file(audio_file)
+
+        # Print the length of the audio for debugging
+        print("Audio Length:", len(audio), "milliseconds")
+
+        audio.export(converted_audio, format="wav")
+
+        # Check if the converted audio file exists
+        if os.path.exists(converted_audio):
+            print("Converted Audio File Created:", converted_audio)
+        else:
+            print("Converted Audio File Not Created")
+
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(converted_audio) as source:
+            audio_data = recognizer.record(source)  # Record audio from the file
+
+        # Recognize the audio
+        text = recognizer.recognize_google(audio_data)
+
+        # Clean up by deleting the converted audio file
+        os.remove(converted_audio)
+
+        return jsonify({'text': text})
+    except Exception as e:
+        return str(e), 500
+
+
