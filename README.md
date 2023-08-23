@@ -1,37 +1,64 @@
-# Frontend Chat with Custom AI Model
+# Interactive AI Chat Application
 
-Welcome to the hiring task for gstudio.ai! In this task, your objective is to create a frontend application that allows users to chat with a custom AI model. You will be provided with the necessary resources to set up the environment and interact with the AI model.
+## Introduction
 
-## Objective
+This project involves creating a frontend application using React that enables users to have interactive conversations with a custom AI model. The application utilizes a provided Google Colab notebook for running the AI model and an example Python file for interacting with it.
 
-Your task is to create a frontend application using React that enables users to have interactive conversations with a custom AI model. You will use the provided Google Colab notebook for running the AI model and the example Python file for interacting with it.
+## Video Walkthrough
 
-## Provided Resources
+A video walkthrough of the application's features and functionality can be found [here](https://drive.google.com/file/d/1tScaxRKfHUBE8zI-uFX1Z67fYY9dANlf/view).
 
-1. **Google Colab Notebook**: This [notebook](https://colab.research.google.com/drive/1BkL7zYVYtn0JPYKMPJ0tJmK-zMtINx0P?usp=sharing) contains the AI model and establishes a WebSocket connection along with a normal server for interaction.
+## Features
 
-2. **Example Python File**: Both Files demonstrates how to interact with the AI model programmatically, you can use any one of the two streaming methods to complete the task. But be ready with a reason of why you selected it.
+- User-friendly chat interface for interactive conversations
+- Integration of AI model for generating responses to user messages
+- Message limit of 25 messages per user
+- Optional login system for tracking users' messages
+- Bonus Points: Incorporation of Silero Text-to-Speech (TTS) for voice output
 
-## Tasks
+## Getting Started
 
-1. **Create a React Frontend**: Develop a user-friendly chat interface using React where users can input their messages and receive responses from the AI model.
+To get started with the application, follow these steps:
 
-2. **Integrate AI Model**: Use the provided example Python file to communicate with the AI model. Messages from the frontend should be sent to the AI model, and the responses should be displayed back to the user in the chat interface.
+1. Clone this repository.
+   ```bash
+   git clone https://github.com/git-rishab/run-your-gpt.git
+2. Set up the backend server using Flask.
+   - Set Up a Virtual Environment: `python -m venv venv`
+   - Activate virtual Environment:
+       - For Windows: `venv\Scripts\activate`
+       - For Mac and Linux: `source venv/bin/activate`
+    - Install Dependencies: `pip install -r requirements.txt`
+    - Set up the environments variable by giving the `MONGO` url in .env file
+    - Run the server: `flask run --reload`
+3. Change the streaming server url at line 18 of chatStream.py that is given by running the code in [notebook](https://colab.research.google.com/drive/1BkL7zYVYtn0JPYKMPJ0tJmK-zMtINx0P?usp=sharing).
+4. Set up the frontend:
+   - Install Dependencies: `npm i`
+   - Start the frontend: `npm run dev`
 
-3. **Implement Message Limit and Login System**: Limit the number of messages a user can send to 25. Optionally, you can implement a simple login system to track users' messages.
+## API Endpoints
 
-4. **Bonus Points - Incorporate Whisper STT and Silero TTS**: If you want to earn brownie points, consider integrating the Whisper Speech-to-Text (STT) system for voice input and Silero Text-to-Speech (TTS) for generating AI model responses as voice output.
+- `/login` POST: Endpoint for user login
+- `/register` POST: Endpoint for user registration
+- `/audio` POST: Endpoint for text to speech conversion
+- `/chat` POST: Endpoint for interacting with the AI model
 
-## Submission
+## Tech Stack
 
-Fork this repository and create your solution within it. Once you're done, please provide us with a link to your forked repository for evaluation.
+- Frontend: React with Mantine UI
+- Backend: Flask
 
-## Evaluation Criteria
+## Screenshots of Application
+- **Fig 1: Login Page of the Application**
+---
+![Screenshot (670)](https://github.com/git-rishab/run-your-gpt/assets/114337213/afadfdb7-63a3-4ac7-9d2e-87d78e5ddd2b)
+---
+- **Fig 2: Chat Interface**
+---
+![Screenshot (671)](https://github.com/git-rishab/run-your-gpt/assets/114337213/e67443a5-b096-4362-8533-0a316ce785be)
+---
 
-- Functionality: Does the frontend allow users to chat with the AI model effectively?
-- Code Quality: Is the code well-structured, clean, and maintainable?
-- Additional Features: Did you successfully implement the message limit, login system, and any bonus tasks?
-- Creativity: Did you go beyond the basic requirements to make the chat interface more engaging and user-friendly?
-- Documentation: Is your `README.md` clear and comprehensive?
 
-Feel free to reach out if you have any questions. Good luck!
+For more detailed instructions and code explanations, refer to the provided Google Colab notebook and example Python file.
+
+For any further questions or assistance, please reach out to [rishabkumarchaurasiya@gmail.com](mailto:rishabkumarchaurasiya@gmail.com).
