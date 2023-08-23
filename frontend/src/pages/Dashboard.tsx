@@ -1,23 +1,31 @@
 import { useState } from "react";
 import { Input, Button, Loader } from "@mantine/core";
 import styles from "../styles/dashboard.module.css";
-import { url } from "../notification";
+import { notification, url } from "../notification";
 import { Microphone } from 'tabler-icons-react';
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [messages, setMessages] = useState<any>([
     { type: "client", message: "Welcome to chat App. How can I help you?" },
   ]);
+  const redirect = useNavigate();
   const userString = sessionStorage.getItem('user');
   const user: any = userString ? JSON.parse(userString) : null;
+  const token: any = sessionStorage.getItem('token');
+  useEffect(()=>{
+    if(!token){
+      notification('Authentication Failed', 'Please login First!', 'white', '#F44336')
+      redirect('/login');
+    }
+  },[token])
   const [loading, setLoading] = useState<Boolean>(false);
   const [chat, setChat] = useState<string>("");
   const [audioSrc, setAudioSrc] = useState("");
   const [textResponse, setTextResponse] = useState<string>('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const [limit, setLimit] = useState(user.limit);
-
+  const [limit, setLimit] = useState(user?.limit);
   const startRecording = () => {
     const constraints: MediaStreamConstraints = { audio: true };
     navigator.mediaDevices.getUserMedia(constraints)
@@ -33,8 +41,6 @@ export default function Dashboard() {
 
         mediaRecorderRef.current.onstop = () => {
           const audioBlob = new Blob(chunks, { type: 'audio/wav' });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setAudioSrc(audioUrl);
           sendAudioToBackend(audioBlob);
         };
 
@@ -54,15 +60,19 @@ export default function Dashboard() {
   const sendAudioToBackend = async (audioBlob: Blob) => {
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob);
+      formData.append('audio', audioBlob, 'audio.wav');
 
       const response = await fetch(`${url}/audiototext`, {
         method: 'POST',
+        headers:{
+          "authorization":`Bearer ${token}`
+        },
         body: formData,
       });
-
+      console.log("audio:",formData);
+      
       const data = await response.json();
-      console.log(data);
+      console.log("response:",data);
       
       setTextResponse(data.text);
     } catch (error) {
@@ -76,7 +86,8 @@ export default function Dashboard() {
       const response:any = await fetch(`${url}/audio`, {
         method:"POST",
         headers:{
-            "content-type":"application/json"
+            "content-type":"application/json",
+            "authorization":`Bearer ${token}`
         },
         body:JSON.stringify({prompt:message})
       });
@@ -103,15 +114,19 @@ export default function Dashboard() {
         method: "POST",
         headers: {
           "content-type": "application/json",
+          "authorization":`Bearer ${token}`
         },
         body: JSON.stringify({ prompt: chat, limit:limit, id:user.id }),
       });
 
       const res = await req.json();
-
+      if(res.ok){
+        newChats.push({ type: "server", message: res.message });
+        playAudio(res.message)
+      } else {
+        notification('Oops!', 'something went wrong', 'white', '#F44336')
+      }
       // Add server response
-      newChats.push({ type: "server", message: res.message });
-      playAudio(res.message)
     } catch (error) {
       console.log(error);
     }
@@ -133,9 +148,10 @@ export default function Dashboard() {
             {el.message}
           </div>
         ))}
-        <audio controls src={audioSrc} />
         {loading && <Loader variant="dots" size="lg" />}
-        <div></div>
+        <div className={styles.audio}>
+          <audio controls src={audioSrc} />
+        </div>
       </div>
   
       <div className={styles.box}>
@@ -147,6 +163,7 @@ export default function Dashboard() {
           value={chat}
         />
         <Button leftIcon={<Microphone />} onClick={startRecording} variant="white"></Button>
+        {/* <Button onClick={stopRecording}>Stop</Button> */}
         <Button onClick={handleMessage}>Send</Button>
       </div>
     </div>

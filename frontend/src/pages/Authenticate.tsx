@@ -62,7 +62,7 @@ export default function Authenticate() {
   
       if (res.ok) {
         notification("Login Successfull", "Welcome!", "white", "#66BB6A");
-        sessionStorage.setItem('token', 'token');
+        sessionStorage.setItem('token', res.token);
         sessionStorage.setItem('user', JSON.stringify(res.data))
         redirect("/dashboard");
       } else {

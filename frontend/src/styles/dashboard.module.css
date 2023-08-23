@@ -16,6 +16,7 @@
     display: flex;
     flex-direction: column;
     row-gap: 15px;
+    overflow-y: scroll;
 }
 
 .box{
@@ -41,4 +42,7 @@
     right: 0;
     background-color: #CAFF8A;
     /* color: #fff; */
+}
+.audio{
+    width: fit-content;
 }

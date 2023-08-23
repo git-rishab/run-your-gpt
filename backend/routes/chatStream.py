@@ -5,9 +5,10 @@ from flask import request, jsonify, send_file
 from gtts import gTTS
 import os
 import openai
-import speech_recognition as sr
-from pydub import AudioSegment
 from config.db import user
+import tempfile
+from pydub import AudioSegment
+from bson import ObjectId
 
 try:
     import websockets
@@ -15,7 +16,7 @@ except ImportError:
     print("Websockets package not found. Make sure it's installed.")
 
 # For local streaming, the websockets are hosted without ssl - ws://
-HOST = 'subscription-tribute-interaction-capture.trycloudflare.com'
+HOST = 'shown-provinces-barriers-creating.trycloudflare.com'
 URI = f'ws://{HOST}/api/v1/chat-stream'
 
 # For reverse-proxied streaming, the remote will likely host with ssl - wss://
@@ -108,12 +109,17 @@ async def print_response_stream(user_input, history):
 
 def chat():
     prompt = request.json['prompt']
-    user_id = request.json['id']
+    user_id = ObjectId(request.json['id'])
     limit = request.json['limit']
     collected_responses = asyncio.run(print_response_stream(prompt, history))
     # history['internal'].append(prompt)
     # history['visible'].append(collected_responses)
+    print(user_id, limit)
     updated = user.update_one({'_id':user_id}, {'$set':{'limit':limit-1}})
+    if updated.acknowledged:
+        print("Update acknowledged")
+    else:
+        print("Update not acknowledged")
     return jsonify({"ok":True, "message":collected_responses})
 
 def audio():
@@ -136,34 +142,25 @@ def audio():
 def audio_to_text():
     try:
         audio_file = request.files['audio']
-
-        # Convert audio to WAV format
-        converted_audio = "converted_audio.wav"
-        audio = AudioSegment.from_file(audio_file)
-
-        # Print the length of the audio for debugging
-        print("Audio Length:", len(audio), "milliseconds")
-
-        audio.export(converted_audio, format="wav")
-
-        # Check if the converted audio file exists
-        if os.path.exists(converted_audio):
-            print("Converted Audio File Created:", converted_audio)
+        
+        if audio_file and allowed_file(audio_file.filename, {'wav', 'webm'}):
+            temp_dir = tempfile.gettempdir()
+            temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploaded_audio.wav')
+            audio_file.save(temp_path)
+            openai.api_key = os.getenv('OPEN_AI_KEY')
+            audio_file= open(f"{os.path.dirname(os.path.abspath(__file__))}\\uploaded_audio.wav", "rb")
+            transcript = openai.Audio.transcribe("whisper-1", audio_file)
+            print(transcript)
+            return jsonify({'ok':True})
         else:
-            print("Converted Audio File Not Created")
-
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(converted_audio) as source:
-            audio_data = recognizer.record(source)  # Record audio from the file
-
-        # Recognize the audio
-        text = recognizer.recognize_google(audio_data)
-
-        # Clean up by deleting the converted audio file
-        os.remove(converted_audio)
-
-        return jsonify({'text': text})
+            return jsonify({"error": "Invalid file format"}), 400
     except Exception as e:
-        return str(e), 500
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+def allowed_file(filename, allowed_extensions):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+
 
 
